@@ -1,0 +1,16 @@
+# Compilados de .NET
+bin/
+obj/
+*.user
+
+# IDEs
+.vs/
+.vscode/
+.idea/
+*.suo
+
+# PDFs descargados por el scraper — pesados, se regeneran corriendo el scraper de nuevo.
+corpus/*/documentos/*.pdf
+
+# Logs / temporales
+*.log

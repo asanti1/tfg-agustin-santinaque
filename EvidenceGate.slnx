@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EvidenceGate.Api/EvidenceGate.Api.csproj" />
+    <Project Path="src/EvidenceGate.Core/EvidenceGate.Core.csproj" />
+    <Project Path="src/EvidenceGate.Ingestion/EvidenceGate.Ingestion.csproj" />
+  </Folder>
+</Solution>
