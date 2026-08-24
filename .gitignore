@@ -14,3 +14,4 @@ corpus/*/documentos/*.pdf
 
 # Logs / temporales
 *.log
+.program.bkp.cs

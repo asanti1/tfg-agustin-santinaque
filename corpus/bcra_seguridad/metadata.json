@@ -1,0 +1,16 @@
+[
+  {
+    "Id": "t-seguef",
+    "NombreArchivo": "t-seguef.pdf",
+    "NombreDescriptivo": "Medidas M\u00EDnimas de Seguridad en Entidades Financieras",
+    "Tipo": "TextoOrdenado",
+    "UrlOrigen": "https://www.bcra.gob.ar/archivos/Pdfs/texord/t-seguef.pdf",
+    "Version": 1,
+    "FechaVigenciaDesde": null,
+    "FechaVigenciaHasta": null,
+    "Vigente": true,
+    "ReemplazaA": null,
+    "Tema": "bcra_seguridad",
+    "FechaDescarga": "2026-08-22T22:02:58.3796122Z"
+  }
+]

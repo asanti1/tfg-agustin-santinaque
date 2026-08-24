@@ -1,12 +1,17 @@
 using EvidenceGate.Core.Models;
 
 namespace EvidenceGate.Ingestion;
+
 public record SeedEntry(
     string Id,
     string NombreDescriptivo,
     string UrlOrigen,
     TipoDocumento Tipo,
-    string Tema
+    string Tema,
+    int Version = 1,
+    bool Vigente = true,
+    string? FechaVigenciaDesde = null,
+    string? ReemplazaA = null
 );
 
 public static class BcraDocumentSeed
