@@ -7,6 +7,8 @@ using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using EvidenceGate.Ingestion.Chunking;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
+using EvidenceGate.Core.Exceptions;
 
 namespace EvidenceGate.Ingestion.Qdrant;
 
@@ -14,14 +16,15 @@ public class QdrantIndexer
 {
     private readonly QdrantClient _qdrant;
     private readonly EmbeddingClient _embeddingClient;
+    private readonly ILogger<QdrantIndexer> _logger;
     private const string NombreColeccion = "evidence_gate_chunks";
 
-    public QdrantIndexer(QdrantClient qdrant, EmbeddingClient embeddingClient)
+    public QdrantIndexer(QdrantClient qdrant, EmbeddingClient embeddingClient, ILogger<QdrantIndexer> logger)
     {
         _qdrant = qdrant;
         _embeddingClient = embeddingClient;
+        _logger = logger;
     }
-
     public async Task CrearColeccionSiNoExisteAsync()
     {
         var colecciones = await _qdrant.ListCollectionsAsync();
@@ -33,7 +36,7 @@ public class QdrantIndexer
             Distance = Distance.Cosine
         });
 
-        Console.WriteLine($"Colección '{NombreColeccion}' creada.");
+        _logger.LogInformation("Colección {Coleccion} creada", NombreColeccion);
     }
 
     public async Task IndexarChunksAsync(List<Chunk> chunks)
@@ -70,7 +73,7 @@ public class QdrantIndexer
         }
 
         await _qdrant.UpsertAsync(NombreColeccion, puntos);
-        Console.WriteLine($"Indexados {puntos.Count} chunks en Qdrant.");
+        _logger.LogInformation("Indexados {Cantidad} chunks en Qdrant", puntos.Count);
     }
 
     public async Task<int> IndexarCorpusCompletoAsync(string tema, string corpusDir)
@@ -80,7 +83,7 @@ public class QdrantIndexer
 
         if (!File.Exists(rutaMetadata))
         {
-            Console.WriteLine($"No se encontró metadata.json para el tema '{tema}'.");
+            _logger.LogWarning("No se encontró metadata.json para el tema {Tema}", tema);
             return 0;
         }
 
@@ -100,7 +103,7 @@ public class QdrantIndexer
 
             if (!File.Exists(rutaPdf))
             {
-                Console.WriteLine($"  [omitido] {metadata.Id}: PDF no encontrado en {rutaPdf}");
+                _logger.LogWarning("Documento {Id} omitido: PDF no encontrado en {Ruta}", metadata.Id, rutaPdf);
                 documentosConError++;
                 continue;
             }
@@ -112,7 +115,7 @@ public class QdrantIndexer
 
                 if (string.IsNullOrWhiteSpace(textoCompleto))
                 {
-                    Console.WriteLine($"  [omitido] {metadata.Id}: texto extraído vacío");
+                    _logger.LogWarning("Documento {Id} omitido: texto extraído vacío", metadata.Id);
                     documentosConError++;
                     continue;
                 }
@@ -120,17 +123,17 @@ public class QdrantIndexer
                 var chunks = chunker.Chunkear(textoCompleto, metadata);
                 todosLosChunks.AddRange(chunks);
                 documentosProcesados++;
-                Console.WriteLine($"  [ok] {metadata.Id}: {chunks.Count} chunks generados");
+                _logger.LogInformation("Documento {Id} procesado: {Cantidad} chunks generados", metadata.Id, chunks.Count);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"  [error] {metadata.Id}: {ex.Message}");
+                var extraccionError = new ExtraccionException($"Error extrayendo/chunkeando {metadata.Id}", ex);
+                _logger.LogError(extraccionError, "Error procesando documento {Id}", metadata.Id);
                 documentosConError++;
             }
         }
 
-        Console.WriteLine($"\nDocumentos procesados: {documentosProcesados} | Con error: {documentosConError} | Total chunks a indexar: {todosLosChunks.Count}");
-
+        _logger.LogInformation("Resumen de indexado: {Procesados} procesados, {ConError} con error, {TotalChunks} chunks totales", documentosProcesados, documentosConError, todosLosChunks.Count);
         await CrearColeccionSiNoExisteAsync();
         await IndexarChunksAsync(todosLosChunks);
 

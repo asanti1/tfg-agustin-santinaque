@@ -1,3 +1,5 @@
+namespace EvidenceGate.Ingestion.Validation;
+
 public class Llamado2DtoCrudo
 {
     public string Resultado { get; set; } = "";

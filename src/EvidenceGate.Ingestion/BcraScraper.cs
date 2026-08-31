@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using EvidenceGate.Core.Models;
+using Microsoft.Extensions.Logging;
+using EvidenceGate.Core.Exceptions;
 
 namespace EvidenceGate.Ingestion;
 
@@ -9,13 +11,15 @@ public class BcraScraper
     private readonly HttpClient _http;
     private readonly string _corpusDir;
     private readonly BcraComunicacionesDiscoverer _discoverer;
+    private readonly ILogger<BcraScraper> _logger;
 
     private JsonSerializerOptions _opciones;
 
-    public BcraScraper(HttpClient http, string corpusDir)
+    public BcraScraper(HttpClient http, string corpusDir, ILogger<BcraScraper> logger)
     {
         _http = http;
         _corpusDir = corpusDir;
+        _logger = logger;
         _opciones = new JsonSerializerOptions { WriteIndented = true };
         _opciones.Converters.Add(new JsonStringEnumConverter());
         _discoverer = new BcraComunicacionesDiscoverer();
@@ -48,7 +52,7 @@ public class BcraScraper
         }
 
         GuardarMetadata(dirCorpus, metadataActualizada);
-        Console.WriteLine($"Procesadas {entradas.Count} entradas del seed + {documentosADescubrir.Count} descubiertas para el tema '{tema}'");
+        _logger.LogInformation("Procesadas {EntradasSeed} entradas del seed + {Descubiertas} descubiertas para el tema {Tema}", entradas.Count, documentosADescubrir.Count, tema);
     }
 
     private async Task<bool> DescargarUnaEntradaAsync(SeedEntry entrada, string rutaDestino, List<DocumentoMetadata> metadataActualizada)
@@ -77,10 +81,10 @@ public class BcraScraper
         }
         catch (HttpRequestException err)
         {
-            Console.WriteLine($"Hubo un error = {err.Message}");
+            var descargaError = new DescargaException($"Error descargando {entrada.Id} desde {entrada.UrlOrigen}", err);
+            _logger.LogError(descargaError, "Error descargando {Id} desde {Url}", entrada.Id, entrada.UrlOrigen);
             return false;
         }
-
     }
 
     private List<DocumentoMetadata> CargarMetadataExistente(string carpetaCorpus)
