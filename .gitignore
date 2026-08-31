@@ -15,3 +15,9 @@ corpus/*/documentos/*.pdf
 # Logs / temporales
 *.log
 .program.bkp.cs
+
+
+
+.env
+qdrant_storage/
+docker-compose.yaml
